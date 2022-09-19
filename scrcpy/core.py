@@ -211,10 +211,20 @@ class Client:
         Core loop for video parsing
         """
         codec = CodecContext.create("h264", "r")
+        timeout = 20
+        
         while self.alive:
             try:
                 raw_h264 = self.__video_socket.recv(0x10000)
                 packets = codec.parse(raw_h264)
+                if len(packets) == 0:
+                    timeout -= 1
+                else:
+                    timeout = 20
+                if timeout == 0:
+                    if self.alive:
+                        self.stop()
+                        
                 for packet in packets:
                     frames = codec.decode(packet)
                     for frame in frames:
